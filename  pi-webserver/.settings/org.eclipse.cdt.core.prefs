@@ -1,0 +1,9 @@
+eclipse.preferences.version=1
+environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.2090228252/CYGWIN/delimiter=;
+environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.2090228252/CYGWIN/operation=append
+environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.2090228252/CYGWIN/value=nodosfilewarning
+environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.2090228252/PATH/delimiter=;
+environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.2090228252/PATH/operation=replace
+environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.2090228252/PATH/value=D\:\\cygwin\\opt\\cross\\x-tools\\arm-unknown-linux-gnueabi\\bin;D\:\\cygwin\\bin;D\:\\cygwin\\usr\\local\\bin;D\:/Program Files (x86)/Java6/jre_6_x86/bin/client;D\:/Program Files (x86)/Java6/jre_6_x86/bin;D\:/Program Files (x86)/Java6/jre_6_x86/lib/i386;D\:\\codesourcery\\bin;D\:\\cygwin\\opt\\cross\\x-tools\\arm-unknown-linux-gnueabi\\bin;D\:\\cygwin\\usr\\local\\bin;D\:\\MCC18\\mpasm;D\:\\MCC18\\bin;D\:\\MCC18\\mpasm;D\:\\MCC18\\bin;D\:\\MCC18\\mpasm;D\:\\MCC18\\bin;D\:\\Program Files (x86)\\Java6\\jre_6_x86\\bin;D\:\\Program Files (x86)\\Java6\\jdk_6_x86\\bin;D\:\\Program Files\\TortoiseSVN\\bin;D\:\\mcc18;C\:\\Program Files\\Microsoft Windows Performance Toolkit\\;D\:\\Program Files (x86)\\Windows Resource Kits\\Windows Performance Toolkit\\;D\:\\MCC18\\bin;D\:\\MCC18\\mpasm;D\:\\MCC18\\bin;D\:\\codesourcery\\bin;D\:\\cygwin\\opt\\cross\\x-tools\\arm-unknown-linux-gnueabi\\bin;D\:\\cygwin\\usr\\local\\bin;D\:\\MCC18\\mpasm;D\:\\MCC18\\bin;D\:\\MCC18\\mpasm;D\:\\MCC18\\bin;D\:\\MCC18\\mpasm;D\:\\MCC18\\bin;D\:\\Program Files (x86)\\ECLIPSE\\eclipseIndigoCpp
+environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.2090228252/append=true
+environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.2090228252/appendContributed=true

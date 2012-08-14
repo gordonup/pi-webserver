@@ -64,6 +64,29 @@ static struct mg_context *ctx; // Set by start_mongoose()
 #define CONFIG_FILE "mongoose.conf"
 #endif /* !CONFIG_FILE */
 
+#define MAX_USER_LEN  20
+#define MAX_MESSAGE_LEN  100
+static const char *ajax_reply_start = "HTTP/1.1 200 OK\r\n"
+		"Cache: no-cache\r\n"
+		"Content-Type: application/x-javascript\r\n"
+		"\r\n";
+
+// Describes single message sent to a chat. If user is empty (0 length),
+// the message is then originated from the server itself.
+struct message {
+	long id; // Message ID
+	char user[MAX_USER_LEN]; // User that have sent the message
+	char text[MAX_MESSAGE_LEN]; // Message text
+	time_t timestamp; // Message timestamp, UTC
+};
+
+// Describes web session.
+struct session {
+	char session_id[33]; // Session ID, must be unique
+	char random[20]; // Random data used for extra user validation
+	char user[MAX_USER_LEN]; // Authenticated user
+	time_t expire; // Expiration timestamp, UTC
+};
 static void WINCDECL signal_handler(int sig_num) {
 	exit_flag = sig_num;
 }
@@ -215,9 +238,40 @@ static void init_server_name(void) {
 	snprintf(server_name, sizeof(server_name), "Mongoose web server v. %s",
 			mg_version());
 }
+static void get_qsvar(const struct mg_request_info *request_info,
+		const char *name, char *dst, size_t dst_len) {
+	const char *qs = request_info->query_string;
+	mg_get_var(qs, strlen(qs == NULL ? "" : qs), name, dst, dst_len);
+}
+// If "callback" param is present in query string, this is JSONP call.
+// Return 1 in this case, or 0 if "callback" is not specified.
+// Wrap an output in Javascript function call.
+static int handle_jsonp(struct mg_connection *conn,
+		const struct mg_request_info *request_info) {
+	char cb[64];
+
+	// !!!FIND IF QUERY_STRING OF REQUEST_INFO HAS "CALLBACK" INSIDE!!!
+	get_qsvar(request_info, "callback", cb, sizeof(cb));
+	if (cb[0] != '\0') {
+		mg_printf(conn, "%s(", cb);
+	}
+
+	return cb[0] == '\0' ? 0 : 1;
+}
 // A handler for the /ajax/send_message endpoint.
 static void ajax_send_message(struct mg_connection *conn,
 		const struct mg_request_info *request_info) {
+	struct message *message;
+	struct session *session;
+	char text[sizeof(message->text) - 1];
+	int is_jsonp;
+	mg_printf(conn, "%s", ajax_reply_start);
+	is_jsonp = handle_jsonp(conn, request_info);
+	mg_printf(conn, "%s", text[0] == '\0' ? "false" : "true");
+
+	if (is_jsonp) {
+		mg_printf(conn, "%s", ")");
+	}
 
 }
 // A handler for the /ajax/get_messages endpoint.

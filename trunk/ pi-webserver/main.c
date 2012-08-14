@@ -33,6 +33,17 @@
 #include <limits.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <pthread.h>
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <termios.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "mongoose.h"
 
@@ -66,6 +77,8 @@ static struct mg_context *ctx; // Set by start_mongoose()
 
 #define MAX_USER_LEN  20
 #define MAX_MESSAGE_LEN  100
+#define MAX_MESSAGES 5
+#define MAX_SESSIONS 2
 static const char *ajax_reply_start = "HTTP/1.1 200 OK\r\n"
 		"Cache: no-cache\r\n"
 		"Content-Type: application/x-javascript\r\n"
@@ -87,6 +100,11 @@ struct session {
 	char user[MAX_USER_LEN]; // Authenticated user
 	time_t expire; // Expiration timestamp, UTC
 };
+static struct message messages[MAX_MESSAGES]; // Ringbuffer for messages
+static struct session sessions[MAX_SESSIONS]; // Current sessions
+static long last_message_id;
+// Protects messages, sessions, last_message_id
+static pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
 static void WINCDECL signal_handler(int sig_num) {
 	exit_flag = sig_num;
 }
@@ -258,6 +276,72 @@ static int handle_jsonp(struct mg_connection *conn,
 
 	return cb[0] == '\0' ? 0 : 1;
 }
+// Allocate new message. Caller must hold the lock.
+static struct message *new_message(void) {
+	static int size = sizeof(messages) / sizeof(messages[0]);
+	struct message *message = &messages[last_message_id % size];
+	message->id = last_message_id++;
+	message->timestamp = time(0);
+	return message;
+}
+// Get session object for the connection. Caller must hold the lock.
+static struct session *get_session(const struct mg_connection *conn) {
+	int i;
+	char session_id[33];
+	time_t now = time(NULL);
+	mg_get_cookie(conn, "session", session_id, sizeof(session_id));
+	for (i = 0; i < MAX_SESSIONS; i++) {
+		if (sessions[i].expire != 0 && sessions[i].expire > now
+				&& strcmp(sessions[i].session_id, session_id) == 0) {
+			break;
+		}
+	}
+	return i == MAX_SESSIONS ? NULL : &sessions[i];
+}
+static void my_strlcpy(char *dst, const char *src, size_t len) {
+	strncpy(dst, src, len);
+	dst[len - 1] = '\0';
+}
+static void my_uart_tx(char *uart_text) {
+	int fd;
+	// Open the Port. We want read/write, no "controlling tty" status, and open it no matter what state DCD is in
+	fd = open("/dev/ttyAMA0", O_WRONLY | O_NOCTTY | O_NDELAY | O_NONBLOCK);
+	if (fd == -1) {
+		perror("open_port: Unable to open /dev/ttyAMA0 - ");
+		// return (-1);
+	}
+
+	// Turn off blocking for reads, use (fd, F_SETFL, FNDELAY) if you want that
+	//fcntl(fd, F_SETFL, 0);
+
+	//Set the baud rate
+	struct termios options;
+	tcgetattr(fd, &options);
+	cfsetispeed(&options, B9600);
+	cfsetospeed(&options, B9600);
+	//Set flow control and all that
+	options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
+	options.c_iflag = IGNPAR | ICRNL;
+	options.c_oflag = 0;
+	//Flush line and set options
+	tcflush(fd, TCIFLUSH);
+	tcsetattr(fd, TCSANOW, &options);
+
+	//set characters
+	char* strOut;
+	int len = asprintf(&strOut, "%s\n", uart_text);
+
+	// Write to the port
+	int n = write(fd, strOut, len);
+	if (n < 0) {
+		perror("error writing");
+		// return -1;
+	}
+
+	// Don't forget to clean up
+	close(fd);
+	// return 0;
+}
 // A handler for the /ajax/send_message endpoint.
 static void ajax_send_message(struct mg_connection *conn,
 		const struct mg_request_info *request_info) {
@@ -267,6 +351,22 @@ static void ajax_send_message(struct mg_connection *conn,
 	int is_jsonp;
 	mg_printf(conn, "%s", ajax_reply_start);
 	is_jsonp = handle_jsonp(conn, request_info);
+	get_qsvar(request_info, "text", text, sizeof(text));
+	if (text[0] != '\0') {
+		// We have a message to store. Write-lock the ringbuffer,
+		// grab the next message and copy data into it.
+		pthread_rwlock_wrlock(&rwlock);
+		message = new_message();
+		// TODO(lsm): JSON-encode all text strings
+		// session = get_session(conn);
+		// assert(session != NULL);
+		my_strlcpy(message->text, text, sizeof(text));
+		// !!! TRY UART !!!
+		my_uart_tx(message->text);
+		// my_strlcpy(message->user, session->user, sizeof(message->user));
+		my_strlcpy(message->user, "alberto", sizeof(message->user));
+		pthread_rwlock_unlock(&rwlock);
+	}
 	mg_printf(conn, "%s", text[0] == '\0' ? "false" : "true");
 
 	if (is_jsonp) {
@@ -274,6 +374,7 @@ static void ajax_send_message(struct mg_connection *conn,
 	}
 
 }
+
 // A handler for the /ajax/get_messages endpoint.
 // Return a list of messages with ID greater than requested.
 static void ajax_get_messages(struct mg_connection *conn,

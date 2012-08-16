@@ -4369,6 +4369,5 @@ struct mg_context *mg_start(mg_callback_t user_callback, void *user_data,
       ctx->num_threads++;
     }
   }
-
   return ctx;
 }

@@ -46,6 +46,7 @@
 #include <sys/stat.h>
 
 #include "mongoose.h"
+#include "uart.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -448,7 +449,6 @@ static void start_mongoose(int argc, char *argv[]) {
 		die("%s", "Failed to start Mongoose.");
 	}
 }
-
 #ifdef _WIN32
 static SERVICE_STATUS ss;
 static SERVICE_STATUS_HANDLE hStatus;
@@ -663,16 +663,28 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR cmdline, int show) {
 
 	while (GetMessage(&msg, hWnd, 0, 0)) {
 		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		DispatchMess
+		age(&msg);
 	}
 }
 #else
+static void startmythread() {
+	my_start_thread();
+
+}
+
 int main(int argc, char *argv[]) {
 	init_server_name();
+	pthread_mutex_init(&lock, NULL);
+	pthread_mutex_lock(&lock);
 	start_mongoose(argc, argv);
 	printf("%s started on port(s) %s with web root [%s]\n", server_name,
 			mg_get_option(ctx, "listening_ports"),
 			mg_get_option(ctx, "document_root"));
+	sleep(1);
+
+	startmythread();
+	pthread_mutex_unlock(&lock);
 	while (exit_flag == 0) {
 		sleep(1);
 	}

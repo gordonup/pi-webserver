@@ -5,15 +5,18 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../main.c \
-../mongoose.c 
+../mongoose.c \
+../uart.c 
 
 OBJS += \
 ./main.o \
-./mongoose.o 
+./mongoose.o \
+./uart.o 
 
 C_DEPS += \
 ./main.d \
-./mongoose.d 
+./mongoose.d \
+./uart.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

@@ -29,8 +29,7 @@ int read_serial_port_2(serial_port sp, uint8_t *pbtRx, const size_t szRx,
 void flush_serial_port_2(serial_port sp);
 int open_serial_port_3();
 int read_serial_port_3(int fd);
-int my_start_thread();
-int trial();
+int uart_thread();
 
 
 #endif /* UART_H_ */

@@ -41,6 +41,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <termios.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -668,8 +671,25 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR cmdline, int show) {
 	}
 }
 #else
-static void startmythread() {
-	my_start_thread();
+/* The signal handler just clears the flag and re-enables itself.  */
+/* This flag controls termination of the main loop.  */
+volatile sig_atomic_t keep_going = 1;
+void catch_alarm (int sig)
+{
+  keep_going = 0;
+  signal (sig, catch_alarm);
+}
+static void start_uart_thread() {
+	  /* Establish a handler for SIGALRM signals.  */
+	  signal (SIGALRM, catch_alarm);
+
+	  /* Set an alarm to go off in a little while.  */
+	  alarm (2);
+
+	  /* Check the flag once in a while to see when to quit.  */
+	  while (keep_going)
+	    //do_stuff ();
+	uart_thread();
 }
 
 int main(int argc, char *argv[]) {
@@ -679,7 +699,7 @@ int main(int argc, char *argv[]) {
 			mg_get_option(ctx, "listening_ports"),
 			mg_get_option(ctx, "document_root"));
 	sleep(1);
-	startmythread();
+	start_uart_thread();
 	while (exit_flag == 0) {
 		sleep(1);
 	}

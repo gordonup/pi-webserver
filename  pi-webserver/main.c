@@ -670,21 +670,16 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR cmdline, int show) {
 #else
 static void startmythread() {
 	my_start_thread();
-
 }
 
 int main(int argc, char *argv[]) {
 	init_server_name();
-	pthread_mutex_init(&lock, NULL);
-	pthread_mutex_lock(&lock);
 	start_mongoose(argc, argv);
 	printf("%s started on port(s) %s with web root [%s]\n", server_name,
 			mg_get_option(ctx, "listening_ports"),
 			mg_get_option(ctx, "document_root"));
 	sleep(1);
-
 	startmythread();
-	pthread_mutex_unlock(&lock);
 	while (exit_flag == 0) {
 		sleep(1);
 	}

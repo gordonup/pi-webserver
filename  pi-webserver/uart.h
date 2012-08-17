@@ -30,6 +30,7 @@ void flush_serial_port_2(serial_port sp);
 int open_serial_port_3();
 int read_serial_port_3(int fd);
 int my_start_thread();
+int trial();
 
 
 #endif /* UART_H_ */

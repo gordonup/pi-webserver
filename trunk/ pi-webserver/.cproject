@@ -47,7 +47,7 @@
 									<listOptionValue builtIn="false" value="&quot;D:\cygwin\opt\cross\x-tools\arm-unknown-linux-gnueabi\arm-unknown-linux-gnueabi\sysroot\usr\lib&quot;"/>
 								</option>
 								<option id="gnu.c.link.option.shared.738821671" name="Shared (-shared)" superClass="gnu.c.link.option.shared" value="false" valueType="boolean"/>
-								<option id="gnu.c.link.option.ldflags.267024769" name="Linker flags" superClass="gnu.c.link.option.ldflags" value="-ldl" valueType="string"/>
+								<option id="gnu.c.link.option.ldflags.267024769" name="Linker flags" superClass="gnu.c.link.option.ldflags" value="-ldl -lrt" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.1496938729" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -108,16 +108,27 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="DD.cdt.managedbuild.target.gnu.cygwin.exe.2085958776" name="Executable" projectType="cdt.managedbuild.target.gnu.cygwin.exe"/>
 	</storageModule>
+	<storageModule moduleId="refreshScope" versionNumber="1">
+		<resource resourceType="PROJECT" workspacePath="/DD"/>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.cygwin.exe.debug.2090228252;cdt.managedbuild.config.gnu.cygwin.exe.debug.2090228252.;cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug.960646595;cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.1587839387">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCWinManagedMakePerProjectProfileC"/>
+			<profile id="org.eclipse.cdt.managedbuilder.core.GCCWinManagedMakePerProjectProfileC">
+				<buildOutputProvider>
+					<openAction enabled="true" filePath=""/>
+					<parser enabled="true"/>
+				</buildOutputProvider>
+				<scannerInfoProvider id="specsFile">
+					<runAction arguments="-std=gnu99 -c 'gcc -E -P -v -dD &quot;${plugin_state_location}/specs.c&quot;'" command="sh" useDefault="true"/>
+					<parser enabled="true"/>
+				</scannerInfoProvider>
+			</profile>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.cygwin.exe.release.1243872525;cdt.managedbuild.config.gnu.cygwin.exe.release.1243872525.;cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.release.1622157605;cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.866696922">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCWinManagedMakePerProjectProfileC"/>
 		</scannerConfigBuildInfo>
-	</storageModule>
-	<storageModule moduleId="refreshScope" versionNumber="1">
-		<resource resourceType="PROJECT" workspacePath="/DD"/>
 	</storageModule>
 </cproject>

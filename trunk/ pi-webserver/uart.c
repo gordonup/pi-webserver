@@ -145,7 +145,7 @@ void uart_thread_func(void *args) {
 	//}
 	fprintf(stdout, "received: %d\n", read_output);
 	// Don't forget to clean up
-	close(fd);
+	//close(fd);
 	//pthread_join((((struct thread_param*) args)->thread_id), NULL);
 }
 

@@ -40,7 +40,7 @@ clean:
 
 post-build:
 	-@echo 'Upload to Raspberry PI and debug'
-	-C:/Users/Utente/Desktop/deploy_debug.bat $(OutDir)DD.a "/home/pi/build/DD.a";C:/Users/Utente/Desktop/deploy_debug_htdocs.bat "E:\EclipseWorkspace\DD\htdocs" "/home/pi/build";
+	-C:/Users/Utente/Desktop/deploy_debug.bat $(OutDir)DD.a "/home/pi/build/DD.a"
 	-@echo ' '
 
 .PHONY: all clean dependents

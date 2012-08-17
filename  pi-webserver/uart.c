@@ -93,7 +93,11 @@ int read_serial_port_3(int fd) {
 
 	return read_output;
 }
-
+struct thread_param {
+		int device_status;
+		char timecode[4];
+		pthread_t thread_id;
+	};
 void uart_thread_func(void *args) {
 	int fd;
 	// Open the Port. We want read/write, no "controlling tty" status, and open it no matter what state DCD is in
@@ -135,13 +139,14 @@ void uart_thread_func(void *args) {
 
 	int read_output;
 	//fd = open_serial_port_3();
-	while (1){
+	//while (1){
 	//sleep(10);
 	read_output = read_serial_port_3(fd);
-	}
+	//}
 	fprintf(stdout, "received: %d\n", read_output);
 	// Don't forget to clean up
 	close(fd);
+	//pthread_join((((struct thread_param*) args)->thread_id), NULL);
 }
 
 int uart_thread() {
@@ -159,14 +164,11 @@ int uart_thread() {
 
 	void *uart_thread_func(void *args);
 	pthread_t thread_id;
-	struct SERIALCTRL {
-		int device_status;
-		char timecode[4];
-	};
 
-	struct SERIALCTRL serial_control;
-
-	pthread_create(&thread_id, NULL, uart_thread_func, (void*) &serial_control);
+	struct thread_param *tp;
+	//tp->thread_id=thread_id;
+	pthread_create(&thread_id, NULL,uart_thread_func, (void*)tp);
+	pthread_join(thread_id,NULL);
 	return 0;
 
 }

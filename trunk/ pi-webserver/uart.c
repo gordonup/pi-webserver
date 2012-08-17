@@ -80,13 +80,13 @@ void set_serial_port_3(int fd) {
 int read_serial_port_3(int fd) {
 	int read_output = -1;
 	void *mesg;
-	mesg = (char *)malloc(1024);
-	void *buf=0;
+	mesg = (char *) malloc(1024);
+	void *buf = 0;
 	do {
-		sleep(2);
+		//sleep(2);
 		read_output = read(fd, mesg, sizeof(mesg));
-		if (read_output==-1){
-				perror("error ");
+		if (read_output == -1) {
+			//perror("error ");
 		}
 	} while (read_output < 0);
 	fprintf(stdout, "Buffer %s", (char *) mesg);
@@ -94,10 +94,10 @@ int read_serial_port_3(int fd) {
 	return read_output;
 }
 
-void do_serial_control(void *args) {
+void uart_thread_func(void *args) {
 	int fd;
 	// Open the Port. We want read/write, no "controlling tty" status, and open it no matter what state DCD is in
-	fd = open("/dev/ttyAMA0", O_RDWR| O_NOCTTY | O_NONBLOCK);
+	fd = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY | O_NONBLOCK);
 	if (fd == -1) {
 		perror("open_port: Unable to open /dev/ttyAMA0 - ");
 	}
@@ -107,42 +107,44 @@ void do_serial_control(void *args) {
 
 	//Set the baud rate
 	/*
-	struct termios options;
-	tcgetattr(fd, &options);
-	cfsetispeed(&options, B9600);
-	cfsetospeed(&options, B9600);
-	//Set flow control and all that
-	options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
-	options.c_iflag = IGNPAR | ICRNL;
-	options.c_oflag = 0;
-	//Flush line and set options
-	tcflush(fd, TCIFLUSH);
-	tcsetattr(fd, TCSANOW, &options);
-*/
+	 struct termios options;
+	 tcgetattr(fd, &options);
+	 cfsetispeed(&options, B9600);
+	 cfsetospeed(&options, B9600);
+	 //Set flow control and all that
+	 options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
+	 options.c_iflag = IGNPAR | ICRNL;
+	 options.c_oflag = 0;
+	 //Flush line and set options
+	 tcflush(fd, TCIFLUSH);
+	 tcsetattr(fd, TCSANOW, &options);
+	 */
 
 	/*
-	//set characters
-	char* strOut;
-	int len = asprintf(&strOut, "%s\n", "sss");
+	 //set characters
+	 char* strOut;
+	 int len = asprintf(&strOut, "%s\n", "sss");
 
-	// Write to the port
-	int n = write(fd, strOut, len);
-	if (n < 0) {
-		perror("error writing");
-	}
-	fprintf(stdout, "sent: %s\n", NULL);
+	 // Write to the port
+	 int n = write(fd, strOut, len);
+	 if (n < 0) {
+	 perror("error writing");
+	 }
+	 fprintf(stdout, "sent: %s\n", NULL);
 	 */
 
 	int read_output;
 	//fd = open_serial_port_3();
+	while (1){
+	//sleep(10);
 	read_output = read_serial_port_3(fd);
+	}
 	fprintf(stdout, "received: %d\n", read_output);
-	getchar();
 	// Don't forget to clean up
 	close(fd);
 }
 
-int my_start_thread() {
+int uart_thread() {
 	/*
 	 pthread_t thread_id;
 	 pthread_attr_t attr;
@@ -155,7 +157,7 @@ int my_start_thread() {
 	 return pthread_create(&thread_id, &attr, func, param);
 	 */
 
-	void *do_serial_control(void *args);
+	void *uart_thread_func(void *args);
 	pthread_t thread_id;
 	struct SERIALCTRL {
 		int device_status;
@@ -164,8 +166,7 @@ int my_start_thread() {
 
 	struct SERIALCTRL serial_control;
 
-	pthread_create(&thread_id, NULL, do_serial_control,
-			(void*) &serial_control);
+	pthread_create(&thread_id, NULL, uart_thread_func, (void*) &serial_control);
 	return 0;
 
 }

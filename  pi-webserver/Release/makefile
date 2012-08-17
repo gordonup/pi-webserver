@@ -22,28 +22,22 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: DD.a
+all: DD.exe
 
 # Tool invocations
-DD.a: $(OBJS) $(USER_OBJS)
+DD.exe: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: Cygwin C Linker'
-	arm-unknown-linux-gnueabi-g++ -L"D:\cygwin\opt\cross\x-tools\arm-unknown-linux-gnueabi\arm-unknown-linux-gnueabi\sysroot\usr\lib" -ldl -lrt -o "DD.a" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc  -o "DD.exe" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
-	$(MAKE) --no-print-directory post-build
 
 # Other Targets
 clean:
-	-$(RM) $(OBJS)$(C_DEPS)$(EXECUTABLES) DD.a
-	-@echo ' '
-
-post-build:
-	-@echo 'Upload to Raspberry PI and debug'
-	-C:/Users/Utente/Desktop/deploy_debug.bat $(OutDir)DD.a "/home/pi/build/DD.a"
+	-$(RM) $(OBJS)$(C_DEPS)$(EXECUTABLES) DD.exe
 	-@echo ' '
 
 .PHONY: all clean dependents
-.SECONDARY: post-build
+.SECONDARY:
 
 -include ../makefile.targets

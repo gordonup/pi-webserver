@@ -50,6 +50,16 @@
 
 #include "mongoose.h"
 #include "uart.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <time.h>
+#include <signal.h>
+#include <sys/time.h>
+#include <sys/select.h>
+#include <signal.h>
+#include <sys/time.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -674,22 +684,40 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR cmdline, int show) {
 /* The signal handler just clears the flag and re-enables itself.  */
 /* This flag controls termination of the main loop.  */
 volatile sig_atomic_t keep_going = 1;
-void catch_alarm (int sig)
-{
-  keep_going = 0;
-  signal (sig, catch_alarm);
+#define INTERVAL 5
+void catch_alarm(int sig) {
+	keep_going = 0;
+	uart_thread();
+	struct itimerval tout_val;
+
+	signal(SIGALRM, catch_alarm);
+
+	tout_val.it_interval.tv_sec = 0;
+	tout_val.it_interval.tv_usec = 0;
+	tout_val.it_value.tv_sec = INTERVAL; /* 10 seconds timer */
+	tout_val.it_value.tv_usec = 0;
+
+	setitimer(ITIMER_REAL, &tout_val, 0);
 }
 static void start_uart_thread() {
-	  /* Establish a handler for SIGALRM signals.  */
-	  signal (SIGALRM, catch_alarm);
+	/* Establish a handler for SIGALRM signals.  */
+	//signal(SIGALRM, catch_alarm);
+	/* Set an alarm to go off in a little while.  */
+	//alarm (12);
+	/* Check the flag once in a while to see when to quit.  */
+	//while (keep_going)
+	//do_stuff ();
+	//uart_thread();
 
-	  /* Set an alarm to go off in a little while.  */
-	  alarm (12);
+	struct itimerval tout_val;
 
-	  /* Check the flag once in a while to see when to quit.  */
-	  while (keep_going)
-	    //do_stuff ();
-	uart_thread();
+	tout_val.it_interval.tv_sec = 0;
+	tout_val.it_interval.tv_usec = 0;
+	tout_val.it_value.tv_sec = INTERVAL; /* 10 seconds timer */
+	tout_val.it_value.tv_usec = 0;
+	setitimer(ITIMER_REAL, &tout_val, 0);
+
+	signal(SIGALRM, catch_alarm); /* set the Alarm signal capture */
 }
 
 int main(int argc, char *argv[]) {

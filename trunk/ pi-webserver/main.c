@@ -684,7 +684,7 @@ static void start_uart_thread() {
 	  signal (SIGALRM, catch_alarm);
 
 	  /* Set an alarm to go off in a little while.  */
-	  alarm (2);
+	  alarm (12);
 
 	  /* Check the flag once in a while to see when to quit.  */
 	  while (keep_going)

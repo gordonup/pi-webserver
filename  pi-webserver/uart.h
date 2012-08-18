@@ -31,5 +31,4 @@ int open_serial_port_3();
 int read_serial_port_3(int fd);
 int uart_thread();
 
-
 #endif /* UART_H_ */

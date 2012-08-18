@@ -1,5 +1,5 @@
-uart.d: ../uart.c ../uart.h ../mongoose.h
-
-../uart.h:
+uart.d: ../uart.c ../mongoose.h ../uart.h
 
 ../mongoose.h:
+
+../uart.h:

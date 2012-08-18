@@ -708,7 +708,6 @@ static void start_uart_thread() {
 	//while (keep_going)
 	//do_stuff ();
 	//uart_thread();
-
 	struct itimerval tout_val;
 
 	tout_val.it_interval.tv_sec = 0;

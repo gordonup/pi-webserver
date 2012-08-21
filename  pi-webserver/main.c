@@ -77,13 +77,16 @@ static struct mg_context *ctx; // Set by start_mongoose()
 #define MAX_MESSAGE_LEN  100
 #define MAX_MESSAGES 5
 #define MAX_SESSIONS 2
+
+#define MAX_MESSAGES 5
+
 static const char *ajax_reply_start = "HTTP/1.1 200 OK\r\n"
 		"Cache: no-cache\r\n"
 		"Content-Type: application/x-javascript\r\n"
 		"\r\n";
 
 // Describes single message sent to a chat. If user is empty (0 length),
-// the message is then originated from the server itself.
+// the message is then originated from the server itself
 struct message {
 	long id; // Message ID
 	char user[MAX_USER_LEN]; // User that have sent the message
@@ -98,7 +101,7 @@ struct session {
 	char user[MAX_USER_LEN]; // Authenticated user
 	time_t expire; // Expiration timestamp, UTC
 };
-static struct message messages[MAX_MESSAGES]; // Ringbuffer for messages
+static struct message messages[MAX_MESSAGES];
 static struct session sessions[MAX_SESSIONS]; // Current sessions
 static long last_message_id;
 // Protects messages, sessions, last_message_id
@@ -275,6 +278,7 @@ static int handle_jsonp(struct mg_connection *conn,
 	return cb[0] == '\0' ? 0 : 1;
 }
 // Allocate new message. Caller must hold the lock.
+
 static struct message *new_message(void) {
 	static int size = sizeof(messages) / sizeof(messages[0]);
 	struct message *message = &messages[last_message_id % size];
@@ -282,6 +286,7 @@ static struct message *new_message(void) {
 	message->timestamp = time(0);
 	return message;
 }
+
 // Get session object for the connection. Caller must hold the lock.
 static struct session *get_session(const struct mg_connection *conn) {
 	int i;
@@ -372,11 +377,58 @@ static void ajax_send_message(struct mg_connection *conn,
 	}
 
 }
+static char *messages_to_json(long last_id) {
+	const struct message *message;
+	int max_msgs, len;
+	char buf[sizeof(messages)]; // Large enough to hold all messages
 
+	// Read-lock the ringbuffer. Loop over all messages, making a JSON string.
+	pthread_rwlock_rdlock(&rwlock);
+	len = 0;
+	max_msgs = sizeof(messages) / sizeof(messages[0]);
+	// If client is too far behind, return all messages.
+	if (last_message_id - last_id > max_msgs) {
+		last_id = last_message_id - max_msgs;
+	}
+	for (; last_id < last_message_id; last_id++) {
+		message = &messages[last_id % max_msgs];
+		if (message->timestamp == 0) {
+			break;
+		}
+		// buf is allocated on stack and hopefully is large enough to hold all
+		// messages (it may be too small if the ringbuffer is full and all
+		// messages are large. in this case asserts will trigger).
+		len += snprintf(buf + len, sizeof(buf) - len,
+				"{user: '%s', text: '%s', timestamp: %lu, id: %lu},",
+				message->user, message->text, message->timestamp, message->id);
+		assert(len > 0);
+		assert((size_t) len < sizeof(buf));
+	}
+
+	pthread_rwlock_unlock(&rwlock);
+	return len == 0 ? NULL : strdup(buf);
+}
 // A handler for the /ajax/get_messages endpoint.
 // Return a list of messages with ID greater than requested.
 static void ajax_get_messages(struct mg_connection *conn,
 		const struct mg_request_info *request_info) {
+
+	char last_id[32], *json;
+	int is_jsonp;
+
+	mg_printf(conn, "%s", ajax_reply_start);
+	is_jsonp = handle_jsonp(conn, request_info);
+
+	get_qsvar(request_info, "last_id", last_id, sizeof(last_id));
+	if ((json = messages_to_json(strtoul(last_id, NULL, 10))) != NULL) {
+		mg_printf(conn, "[%s]", json);
+		free(json);
+	}
+
+	if (is_jsonp) {
+		mg_printf(conn, "%s", ")");
+	}
+
 }
 static void *mongoose_callback(enum mg_event ev, struct mg_connection *conn) {
 	if (ev == MG_EVENT_LOG) {
@@ -668,10 +720,74 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR cmdline, int show) {
 /* The signal handler just clears the flag and re-enables itself.  */
 /* This flag controls termination of the main loop.  */
 #define INTERVAL 5
+struct thread_param {
+	int device_status;
+	char timecode[4];
+	pthread_t thread_id;
+};
+void uart_thread_func(void *args) {
+	int fd;
+	struct message *message;
+		struct session *session;
+		char text[sizeof(message->text) - 1];
+	// Open the Port. We want read/write, no "controlling tty" status, and open it no matter what state DCD is in
+	fd = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY | O_NONBLOCK);
+	if (fd == -1) {
+		perror("open_port: Unable to open /dev/ttyAMA0 - ");
+	}
+
+	// Turn off blocking for reads, use (fd, F_SETFL, FNDELAY) if you want that
+	// fcntl(fd, F_SETFL, 0);
+
+	//Set the baud rate
+	/*
+	 struct termios options;
+	 tcgetattr(fd, &options);
+	 cfsetispeed(&options, B9600);
+	 cfsetospeed(&options, B9600);
+	 //Set flow control and all that
+	 options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
+	 options.c_iflag = IGNPAR | ICRNL;
+	 options.c_oflag = 0;
+	 //Flush line and set options
+	 tcflush(fd, TCIFLUSH);
+	 tcsetattr(fd, TCSANOW, &options);
+	 */
+
+	char *read_output;
+	// while (1){
+	// sleep(10);
+	read_output = read_serial_port(fd);
+	// }
+	fprintf(stdout, "received: %s\n", read_output);
+	// Don't forget to clean up
+	// close(fd);
+	pthread_rwlock_wrlock(&rwlock);
+		message = new_message();
+		// TODO(lsm): JSON-encode all text strings
+		// session = get_session(conn);
+		// assert(session != NULL);
+		my_strlcpy(message->text, read_output, sizeof(text));
+		// my_strlcpy(message->user, session->user, sizeof(message->user));
+		my_strlcpy(message->user, "alberto", sizeof(message->user));
+		pthread_rwlock_unlock(&rwlock);
+	pthread_exit((void*) args);
+}
+int uart_thread() {
+	void *uart_thread_func(void *args);
+	pthread_t thread_id;
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	struct thread_param *tp;
+	pthread_create(&thread_id, &attr, uart_thread_func, (void*) tp);
+	pthread_attr_destroy(&attr);
+	pthread_join(thread_id, NULL);
+	return 0;
+}
 void catch_alarm(int sig) {
 
 	uart_thread();
-
 	struct itimerval tout_val;
 
 	signal(SIGALRM, catch_alarm);

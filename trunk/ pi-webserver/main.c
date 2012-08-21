@@ -406,7 +406,7 @@ static char *messages_to_json(long last_id) {
 		assert((size_t) len < sizeof(buf));
 	}
 	// TRIM ENDING ',' IN BUFFER
-	buf[len-1]=0;
+	buf[len - 1] = 0;
 	pthread_rwlock_unlock(&rwlock);
 	// GOOD FOR DEBUGGING
 	// fprintf(stdout, "string %s\n", buf);
@@ -781,16 +781,16 @@ void uart_thread_func() {
 }
 int uart_thread() {
 	/*
-	void *uart_thread_func(void *args);
-	pthread_t thread_id;
-	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	struct thread_param *tp;
-	pthread_create(&thread_id, &attr, uart_thread_func, (void*) tp);
-	pthread_attr_destroy(&attr);
-	pthread_join(thread_id, NULL);
-	*/
+	 void *uart_thread_func(void *args);
+	 pthread_t thread_id;
+	 pthread_attr_t attr;
+	 pthread_attr_init(&attr);
+	 pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	 struct thread_param *tp;
+	 pthread_create(&thread_id, &attr, uart_thread_func, (void*) tp);
+	 pthread_attr_destroy(&attr);
+	 pthread_join(thread_id, NULL);
+	 */
 	uart_thread_func();
 	return 0;
 }

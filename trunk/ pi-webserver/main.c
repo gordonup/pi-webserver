@@ -367,7 +367,7 @@ static void ajax_send_message(struct mg_connection *conn,
 		// !!! TRY UART !!!
 		my_uart_tx(message->text);
 		// my_strlcpy(message->user, session->user, sizeof(message->user));
-		my_strlcpy(message->user, "alberto", sizeof(message->user));
+		my_strlcpy(message->user, "from_webpage", sizeof(message->user));
 		pthread_rwlock_unlock(&rwlock);
 	}
 	mg_printf(conn, "%s", text[0] == '\0' ? "false" : "true");
@@ -385,6 +385,7 @@ static char *messages_to_json(long last_id) {
 	// Read-lock the ringbuffer. Loop over all messages, making a JSON string.
 	pthread_rwlock_rdlock(&rwlock);
 	len = 0;
+	// MAX_MSGS: THINK ABOUT MESSAGES CONTAINING JUST 1 MESSAGE --> MAX_MSGS=1
 	max_msgs = sizeof(messages) / sizeof(messages[0]);
 	// If client is too far behind, return all messages.
 	if (last_message_id - last_id > max_msgs) {
@@ -404,10 +405,11 @@ static char *messages_to_json(long last_id) {
 		assert(len > 0);
 		assert((size_t) len < sizeof(buf));
 	}
-
+	// TRIM ENDING ',' IN BUFFER
 	buf[len-1]=0;
 	pthread_rwlock_unlock(&rwlock);
-	fprintf(stdout, "string %s\n", buf);
+	// GOOD FOR DEBUGGING
+	// fprintf(stdout, "string %s\n", buf);
 	return len == 0 ? NULL : strdup(buf);
 }
 // A handler for the /ajax/get_messages endpoint.
@@ -422,7 +424,9 @@ static void ajax_get_messages(struct mg_connection *conn,
 	is_jsonp = handle_jsonp(conn, request_info);
 
 	get_qsvar(request_info, "last_id", last_id, sizeof(last_id));
+	// HOVER THE MOUSE OVER STRTOUL
 	if ((json = messages_to_json(strtoul(last_id, NULL, 10))) != NULL) {
+		// CAST JSON BUFFER INTO SQUARE BRACKETS
 		mg_printf(conn, "[%s]", json);
 		free(json);
 	}
@@ -771,7 +775,7 @@ void uart_thread_func() {
 	// assert(session != NULL);
 	my_strlcpy(message->text, read_output, sizeof(text));
 	// my_strlcpy(message->user, session->user, sizeof(message->user));
-	my_strlcpy(message->user, "alberto", sizeof(message->user));
+	my_strlcpy(message->user, "from_terminal", sizeof(message->user));
 	pthread_rwlock_unlock(&rwlock);
 	//pthread_exit((void*) args);
 }

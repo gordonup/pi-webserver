@@ -1,6 +1,7 @@
 // This file is part of Mongoose project, http://code.google.com/p/mongoose
 var rele_status = [0, 0, 0, 0, 0, 0, 0, 0];
-var rele_cmds = ["a", "b", "c", "d", "e", "f", "g", "h"];
+var input_status = [0, 0, 0, 0, 0, 0, 0, 0];
+var cmds = ["a", "b", "c", "d", "e", "f", "g", "h"];
 var chat = {
 	// Backend URL, string.
 	// 'http://backend.address.com' or '' if backend is the same as frontend
@@ -38,11 +39,49 @@ chat.refresh = function(data) {
 		return;
 	}
 	$.each(data, function(index, entry) {
+		// INCREMENT LAST_ID
 		chat.lastMessageId = Math.max(chat.lastMessageId, entry.id) + 1;
+		if (entry.user=="from_terminal"){
+			for (i = 1; i < 9; i++){
+				if (entry.text == cmds[i-1] || entry.text == cmds[i-1].toUpperCase()){
+					switch(input_status[i-1]) {
+					case 0:
+						input_status[i - 1] = 1;
+						break;
+					case 1:
+						input_status[i - 1] = 0;
+						break;
+					default:
+					//code to be executed if n is different from case 1 and 2
+				}
+				}
+			}
+		}
 	});
 	
+	chat.refresh_inputs();
 };
-
+chat.refresh_inputs = function(){
+	var input = $(".input_table_col_el");
+	for( i = 0; i < input.size(); i++) {
+		for( j = 1; j < 9; j++){
+		if(input[i].id.indexOf(j) != -1) {
+			switch(input_status[j-1]) {
+			case 0:
+				input[i].innerHTML = "0";
+				break;
+			case 1:
+				input[i].innerHTML = "1";
+				break;
+			default:
+			//code to be executed if n is different from case 1 and 2
+		}
+		}
+		
+	}
+	}
+	
+}
 chat.getMessages = function() {
 	$.ajax({
 		dataType : 'jsonp',
@@ -67,12 +106,12 @@ chat.handleMenuItemClick = function(ev) {
 				case 0:
 					input.src = "img/Power_Button_States_On_Off_clip_art_small.png";
 					rele_status[i - 1] = 1;
-					ajax_data = rele_cmds[i - 1];
+					ajax_data = cmds[i - 1];
 					break;
 				case 1:
 					input.src = "img/Powerbutton_States_On_Off_clip_art_small.png";
 					rele_status[i - 1] = 0;
-					ajax_data = rele_cmds[i - 1].toUpperCase();
+					ajax_data = cmds[i - 1].toUpperCase();
 					break;
 				default:
 				//code to be executed if n is different from case 1 and 2
@@ -90,13 +129,13 @@ chat.handleMenuItemClick = function(ev) {
 			text : ajax_data
 		},
 		success : function(ev) {
-			//input.value = '';
-			//input.disabled = false;
-			chat.getMessages();
+			// input.value = '';
+			// input.disabled = false;
+			// chat.getMessages();
 		},
 		error : function(ev) {
 			chat.showError('Error sending message');
-			//input.disabled = false;
+			// input.disabled = false;
 		},
 	});
 

@@ -36,6 +36,7 @@ void set_serial_port(int fd) {
 }
 
 void choppy(char *s) {
+	// HOVER MOUSE OVER STRCSPN: TRIM ENDING \n
 	s[strcspn(s, "\n")] = '\0';
 }
 
@@ -51,6 +52,7 @@ char *read_serial_port(int fd) {
 		}
 	} while (read_output < 0);
 	fprintf(stdout, "Buffer %s", (char *) mesg);
+	// IMPORTANT: TRIM ENDING \N
 	choppy((char *) mesg);
 	return (char *) mesg;
 }

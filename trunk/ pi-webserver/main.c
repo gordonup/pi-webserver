@@ -405,7 +405,9 @@ static char *messages_to_json(long last_id) {
 		assert((size_t) len < sizeof(buf));
 	}
 
+	buf[len-1]=0;
 	pthread_rwlock_unlock(&rwlock);
+	fprintf(stdout, "string %s\n", buf);
 	return len == 0 ? NULL : strdup(buf);
 }
 // A handler for the /ajax/get_messages endpoint.
@@ -725,11 +727,11 @@ struct thread_param {
 	char timecode[4];
 	pthread_t thread_id;
 };
-void uart_thread_func(void *args) {
+void uart_thread_func() {
 	int fd;
 	struct message *message;
-		struct session *session;
-		char text[sizeof(message->text) - 1];
+	struct session *session;
+	char text[sizeof(message->text) - 1];
 	// Open the Port. We want read/write, no "controlling tty" status, and open it no matter what state DCD is in
 	fd = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY | O_NONBLOCK);
 	if (fd == -1) {
@@ -763,17 +765,18 @@ void uart_thread_func(void *args) {
 	// Don't forget to clean up
 	// close(fd);
 	pthread_rwlock_wrlock(&rwlock);
-		message = new_message();
-		// TODO(lsm): JSON-encode all text strings
-		// session = get_session(conn);
-		// assert(session != NULL);
-		my_strlcpy(message->text, read_output, sizeof(text));
-		// my_strlcpy(message->user, session->user, sizeof(message->user));
-		my_strlcpy(message->user, "alberto", sizeof(message->user));
-		pthread_rwlock_unlock(&rwlock);
-	pthread_exit((void*) args);
+	message = new_message();
+	// TODO(lsm): JSON-encode all text strings
+	// session = get_session(conn);
+	// assert(session != NULL);
+	my_strlcpy(message->text, read_output, sizeof(text));
+	// my_strlcpy(message->user, session->user, sizeof(message->user));
+	my_strlcpy(message->user, "alberto", sizeof(message->user));
+	pthread_rwlock_unlock(&rwlock);
+	//pthread_exit((void*) args);
 }
 int uart_thread() {
+	/*
 	void *uart_thread_func(void *args);
 	pthread_t thread_id;
 	pthread_attr_t attr;
@@ -783,6 +786,8 @@ int uart_thread() {
 	pthread_create(&thread_id, &attr, uart_thread_func, (void*) tp);
 	pthread_attr_destroy(&attr);
 	pthread_join(thread_id, NULL);
+	*/
+	uart_thread_func();
 	return 0;
 }
 void catch_alarm(int sig) {

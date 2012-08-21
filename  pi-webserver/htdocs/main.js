@@ -32,6 +32,14 @@ chat.refresh = function(data) {
 		$('#mml div:first-child').remove();
 	}
 	*/
+	// OK GOOD FOR DEBUG: console.log(data);
+	console.log(data);
+	if (typeof(data)=='undefined'){
+		return;
+	}
+	$.each(data, function(index, entry) {
+		chat.lastMessageId = Math.max(chat.lastMessageId, entry.id) + 1;
+	});
 	
 };
 

@@ -35,10 +35,9 @@ int open_serial_port() {
 void set_serial_port(int fd) {
 }
 
-void choppy( char *s )
-	{
-	    s[strcspn ( s, "\n" )] = '\0';
-	}
+void choppy(char *s) {
+	s[strcspn(s, "\n")] = '\0';
+}
 
 char *read_serial_port(int fd) {
 	int read_output = -1;
@@ -52,6 +51,6 @@ char *read_serial_port(int fd) {
 		}
 	} while (read_output < 0);
 	fprintf(stdout, "Buffer %s", (char *) mesg);
-	choppy((char *)mesg);
+	choppy((char *) mesg);
 	return (char *) mesg;
 }

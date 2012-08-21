@@ -20,7 +20,6 @@
 typedef void *serial_port;
 int open_serial_port();
 void set_serial_port(int fd);
-int read_serial_port(int fd);
-int uart_thread();
+char *read_serial_port(int fd);
 
 #endif /* UART_H_ */

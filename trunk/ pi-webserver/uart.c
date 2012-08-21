@@ -26,13 +26,21 @@
 #include "mongoose.h"
 #include "uart.h"
 
+// struct message messages2[MAX_MESSAGES]; // Ringbuffer for messages
+// struct message *messages2 = (message *)malloc(sizeof(message) * 5);
+
 int open_serial_port() {
 	return 0;
 }
 void set_serial_port(int fd) {
 }
 
-int read_serial_port(int fd) {
+void choppy( char *s )
+	{
+	    s[strcspn ( s, "\n" )] = '\0';
+	}
+
+char *read_serial_port(int fd) {
 	int read_output = -1;
 	void *mesg;
 	mesg = (char *) malloc(1024);
@@ -44,61 +52,6 @@ int read_serial_port(int fd) {
 		}
 	} while (read_output < 0);
 	fprintf(stdout, "Buffer %s", (char *) mesg);
-
-	return read_output;
+	choppy((char *)mesg);
+	return (char *) mesg;
 }
-struct thread_param {
-	int device_status;
-	char timecode[4];
-	pthread_t thread_id;
-};
-void uart_thread_func(void *args) {
-	int fd;
-	// Open the Port. We want read/write, no "controlling tty" status, and open it no matter what state DCD is in
-	fd = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY | O_NONBLOCK);
-	if (fd == -1) {
-		perror("open_port: Unable to open /dev/ttyAMA0 - ");
-	}
-
-	// Turn off blocking for reads, use (fd, F_SETFL, FNDELAY) if you want that
-	// fcntl(fd, F_SETFL, 0);
-
-	//Set the baud rate
-	/*
-	 struct termios options;
-	 tcgetattr(fd, &options);
-	 cfsetispeed(&options, B9600);
-	 cfsetospeed(&options, B9600);
-	 //Set flow control and all that
-	 options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
-	 options.c_iflag = IGNPAR | ICRNL;
-	 options.c_oflag = 0;
-	 //Flush line and set options
-	 tcflush(fd, TCIFLUSH);
-	 tcsetattr(fd, TCSANOW, &options);
-	 */
-
-	int read_output;
-	// while (1){
-	// sleep(10);
-	read_output = read_serial_port(fd);
-	// }
-	fprintf(stdout, "received: %d\n", read_output);
-	// Don't forget to clean up
-	// close(fd);
-	pthread_exit((void*) args);
-}
-
-int uart_thread() {
-	void *uart_thread_func(void *args);
-	pthread_t thread_id;
-	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	struct thread_param *tp;
-	pthread_create(&thread_id, &attr, uart_thread_func, (void*) tp);
-	pthread_attr_destroy(&attr);
-	pthread_join(thread_id, NULL);
-	return 0;
-}
-
